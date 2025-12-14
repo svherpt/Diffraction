@@ -1,6 +1,6 @@
 from src.simulator import WaveSimulator
 from src.visualiser import Visualiser
-from src.scene_objects import PointSource
+from src.scene_objects import PointSource, LineSource
 from src.initial_field_augmenters import DampeningWall, DampeningBorder
 from src.key_handler import KeyHandler
 import cv2
@@ -13,15 +13,20 @@ def main():
 
     scene_objects = [
         # PointSource(position=(nz // 4, 17 * nx // 32), frequency=2.2e14, amplitude=10),
-        PointSource(position=(nz // 4, 16 * nx // 32), frequency=2.2e14, amplitude=10),
+        # PointSource(position=(nz // 4, 16 * nx // 32), frequency=2.2e14, amplitude=10),
         # PointSource(position=(nz // 4, 15 * nx // 32), frequency=2.2e14, amplitude=10),
+        LineSource(start_position=(40, 20), size=(1, nx-40), frequency=2.2e14, amplitude=10),
         ]
+
+    wall_min_dampening = 0.80
+    wall_alpha = 2.0
+
     initial_field_augmenters = [
-        DampeningBorder(border_width=10, min_dampening=0.9, alpha=2.0),
-        DampeningWall(position=(0, 600), size=(490, 20), min_dampening=0.90, alpha=3.0),
-        DampeningWall(position=(510, 600), size=(20, 20), min_dampening=0.90, alpha=3.0),
-        DampeningWall(position=(550, 600), size=(20, 20), min_dampening=0.90, alpha=3.0),
-        DampeningWall(position=(590, 600), size=(490, 20), min_dampening=0.90, alpha=3.0),
+        DampeningBorder(border_width=20, min_dampening=0.9, alpha=2.0),
+        DampeningWall(position=(0, 600), size=(490, 30), min_dampening=wall_min_dampening, alpha=wall_alpha),
+        DampeningWall(position=(510, 600), size=(20, 30), min_dampening=wall_min_dampening, alpha=wall_alpha),
+        DampeningWall(position=(550, 600), size=(20, 30), min_dampening=wall_min_dampening, alpha=wall_alpha),
+        DampeningWall(position=(590, 600), size=(490, 30), min_dampening=wall_min_dampening, alpha=wall_alpha),
         ]
     
     sim = WaveSimulator(grid_size=(nx, nz), grid_spacing=(1e-7, 1e-7), scene_objects=scene_objects, initial_field_augmenters=initial_field_augmenters, time_scaler=1)

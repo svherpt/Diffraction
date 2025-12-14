@@ -7,11 +7,12 @@ class InitialFieldAugmenters(ABC):
         pass
 
 class DampeningWall(InitialFieldAugmenters):
-    def __init__(self, position, size, min_dampening=0.9, alpha=3.0):
+    def __init__(self, position, size, min_dampening=0.9, alpha=3.0, edge_thickness=10):
         self.position = position
         self.size = size
         self.min_dampening = min_dampening
         self.alpha = alpha
+        self.edge_thickness = edge_thickness  # distance over which damping decays
 
     def get_dampening_field(self, scene):
         x_start, z_start = self.position
@@ -21,17 +22,21 @@ class DampeningWall(InitialFieldAugmenters):
 
         damp_field = cp.ones(scene.electric.shape, dtype=cp.float32)
 
-        rows = width
-        cols = height
+        # create index grids
+        x = cp.arange(width, dtype=cp.float32)
+        z = cp.arange(height, dtype=cp.float32)
+        X, Z = cp.meshgrid(x, z, indexing='ij')
 
-        x_lin = cp.linspace(0, 1, rows, dtype=cp.float32)
-        z_lin = cp.linspace(0, 1, cols, dtype=cp.float32)
+        # distance to nearest edge along x and z
+        dx = cp.minimum(X, width - 1 - X)
+        dz = cp.minimum(Z, height - 1 - Z)
+        d = cp.minimum(dx, dz)
 
-        # gradient from edges along x and z
-        gx = self.min_dampening + (1.0 - self.min_dampening) * cp.exp(-self.alpha * cp.minimum(x_lin, 1 - x_lin))
-        gz = self.min_dampening + (1.0 - self.min_dampening) * cp.exp(-self.alpha * cp.minimum(z_lin, 1 - z_lin))
+        # normalized distance for damping (0 at edge, 1 at edge_thickness)
+        d_norm = cp.clip(d / self.edge_thickness, 0, 1)
 
-        gradient_2d = cp.outer(gx, gz)
+        gradient_2d = self.min_dampening + (1.0 - self.min_dampening) * (1 - d_norm)**self.alpha
+
 
         damp_field[x_start:x_end, z_start:z_end] *= gradient_2d
 
