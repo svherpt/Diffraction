@@ -15,3 +15,8 @@ class KeyHandler:
 
         if key in rendering_modes:
             self.render_mode = rendering_modes[key]
+
+        if key == ord('s'):
+            return {"type": "skip", "num_steps": 1000}
+
+        return {"type": "normal"}

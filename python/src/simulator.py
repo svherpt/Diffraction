@@ -31,8 +31,20 @@ class WaveSimulator:
         for dampening_field in all_dampening_fields:
             self.dampening_field = cp.minimum(self.dampening_field, dampening_field)
 
-    def step(self):
+    def update(self, event):
+
+        num_steps = 1
+        if(event["type"] == "skip"):
+            num_steps = event["num_steps"]
+
+        print(f"Advancing simulation by {num_steps} steps.")
+
+        for _ in range(num_steps):
+            self.step(event)
+
+    def step(self, event):
         self.t += self.dt
+
 
         laplacian = cupyx.scipy.signal.convolve2d(self.electric, self.laplacian_kernel, mode='same', boundary='fill')
 
@@ -43,6 +55,8 @@ class WaveSimulator:
 
         for obj in self.scene_objects:
             obj.update_electric_field(self.electric, self.t)
+
+            
 
     def get_electric_field(self):
         return self.electric
